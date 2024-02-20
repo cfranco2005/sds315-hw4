@@ -1,0 +1,49 @@
+---
+title: "sds315-franco-hw4"
+author: "Chris Franco"
+date: "2024-02-14"
+output: html_document
+---
+UTEID: cdf2455
+
+[GitHub Repository](https://github.com/cfranco2005/sds315-hw4.git)
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+
+library(ggplot2)
+library(mosaic)
+library(tidyverse)
+library(knitr)
+library(tibble)
+library(dplyr)
+```
+
+### Problem 1 ###
+
+```{r}
+gas_prices <- read_csv("gasprices.csv")
+```
+
+
+### Problem 2 ###
+
+```{r}
+
+```
+
+
+### Problem 3 ###
+
+```{r}
+
+```
+
+
+### Problem 4 ###
+
+```{r}
+ebay <- read_csv("ebay.csv")
+```
+
