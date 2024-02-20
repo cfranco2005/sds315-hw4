@@ -1,8 +1,10 @@
 ---
-title: "sds315-franco-hw4"
+title: "HW4"
 author: "Chris Franco"
 date: "2024-02-14"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 UTEID: cdf2455
 
@@ -15,35 +17,202 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE)
 library(ggplot2)
 library(mosaic)
 library(tidyverse)
-library(knitr)
 library(tibble)
 library(dplyr)
+
 ```
 
 ### Problem 1 ###
 
-```{r}
-gas_prices <- read_csv("gasprices.csv")
+```{r, include=FALSE}
+gas_prices <- read_csv("gas.csv") 
+
+gas_prices <- gas_prices %>%
+  mutate(income1000 = Income/1000)
+
+lm_price_income = lm(Price ~ income1000, data = gas_prices)
+coef(lm_price_income)
+
+boot_income = do(10000)*lm(Price ~ income1000, data = mosaic::resample(gas_prices))
+confint(boot_income, level = 0.95)
+
+
 ```
 
+The first theory we are investigating is whether or not there is a correlation between gas prices and income in zip codes where those gas stations are. The sample slope we obtained is 0.001 cents for an increase in $1000 income where the gas station is located. To measure the statistical uncertainty of our best estimate we simulated 10,000 Monte Carlo simulations adhering to the bootstrapping process. We are 95% confident that the interval from 0.0006 to 0.0018 captures the true slope relating income rate for a zip code and the gas prices within it for the city of Austin. Because the interval is only very close to reaching zero doesn't this fall under the realm of statistical significance however its practical importance is very marginal. 
+
+```{r, include=FALSE}
+mean(Price ~ Competitors, data=gas_prices)
+
+diffmean(Price ~ Competitors, data=gas_prices)
+
+boot_competitors = do(10000)*diffmean(Price ~ Competitors, data=mosaic::resample(gas_prices))
+
+ggplot(boot_competitors) + 
+  geom_histogram(aes(x=diffmean))
+
+confint(boot_competitors, level = 0.95)
+```
+
+The claim we are investiagting is whether or not gas stations charge more when they aren't competitors in sight. The difference in average price between gas stations that had no competitors vs those that did in our sample was -0.02 indicating a higher price for gas stations with competitors which goes against the initial theory. After performing a bootstrap with the sample data and running 10000 Monte Carlo simulations, we are 95% confident that the true difference between the average price of gas in Austin between gas stations that have no near competitors and those that do is from -0.05 to 0.00. This shows that there is no statistical significance to the discrepancy we found in the sample nor practical importance as it is a matter of a few legible cents. 
+
+```{r, include=FALSE}
+mean(Price ~ Stoplight, data=gas_prices)
+
+diffmean(Price ~ Stoplight, data=gas_prices)
+
+boot_stoplight = do(10000)*diffmean(Price ~ Stoplight, data=mosaic::resample(gas_prices))
+
+ggplot(boot_stoplight) + 
+  geom_histogram(aes(x=diffmean))
+
+confint(boot_stoplight, level = 0.95)
+```
+
+The theory we are investigating is whether or not gas stations at stoplights charge more for gas. The difference in average price between gas stations that aren't at a stoplight vs those that are in our sample was -0.003 indicating a higher yet very miniscule price for gas stations not located at stoplights. After performing a bootstrap with the sample data and running 10000 Monte Carlo simulations, we are 95% confident that the true difference between the average price of gas in Austin between gas stations that aren't at stoplights and those that are is from -0.03 to 0.03. This shows that there is no statistical significance to the discrepancy we found in the sample because zero is contained in the interval nor practical importance as it is a matter of a few legible cents.
+
+
+```{r, include=FALSE}
+mean(Price ~ Highway, data=gas_prices)
+
+diffmean(Price ~ Highway, data=gas_prices)
+
+boot_highway = do(10000)*diffmean(Price ~ Highway, data=mosaic::resample(gas_prices))
+
+ggplot(boot_highway) + 
+  geom_histogram(aes(x=diffmean))
+
+confint(boot_highway, level = 0.95)
+```
+The theory we are investigating is whether or not gas stations with direct access to the highway charge more for gas. The difference in average price between gas stations that don't have access to the highway vs those that that do in our sample was $0.05 indicating a higher price for gas stations having access to the highway. After performing a bootstrap with the sample data and running 10000 Monte Carlo simulations, we are 95% confident that the true difference between the average price of gas in Austin between gas stations that don't have direct access to the highway and those that do is from 0.008 to 0.08. This shows that there is statistical significance to the discrepancy we found in the sample because zero is contained in the interval and seems to be one of the theories supported by statistical evidence.
+
+```{r, include=FALSE}
+gas_shell <- gas_prices %>%
+  mutate(isShell = ifelse(Brand == "Shell", TRUE, FALSE))
+
+mean(Price ~ isShell, data = gas_shell)
+diffmean(Price ~isShell, data = gas_shell)
+boot_shell = do(10000)*diffmean(Price ~ isShell, data=mosaic::resample(gas_shell))
+
+confint(boot_shell, level = 0.95)
+```
+
+ Many believe that Shell charges more than other gas stations. The difference in average price in the sample is about 0.03 in favor of the theory being true. After bootstrapping and performing 10,000 Monte Carlo simulations, we are 95% confident that the interval containing the true difference in average price between Shell gas stations in Austin and other gas stations is from -0.01 to 0.06. Because this interval contains zero it concludes that there is no statistical significance to the sample and no real weight to the theory.
 
 ### Problem 2 ###
 
-```{r}
+```{r, include=FALSE}
+sclass <- read_csv("sclass.csv")
 
+sclass_filtered <- sclass %>%
+  filter(year == 2011, trim == "63 AMG") 
+
+
+sclass_filtered_bootstrap = mosaic::resample(sclass_filtered)
+boot_sclass_filtered = do(10000)*mean(~mileage, data=mosaic::resample(sclass_filtered))
+
+confint(boot_sclass_filtered, level=0.95)
 ```
+
+Thee average mileage of 2011 S-Class 63 AMGs that were hitting the used-car market when this data was collected was 28997.34 miles. We are 95% confident that the true mean falls between 26290.9 and 31782.7 miles which our mean derived from a sample of such cars falls in. 
+
+```{r, include=FALSE}
+
+sclass_filtered2 <- sclass %>%
+  filter(year == 2014, trim == "550") %>% 
+  mutate(isBlack = ifelse(color == "Black", TRUE, FALSE))
+                                      
+prop(~isBlack, data = sclass_filtered2)
+boot_black = do(10000)*prop(~isBlack, data =mosaic::resample(sclass_filtered2))
+
+confint(boot_black, level = 0.95)
+```
+
+The proportion of 2014 S-Class 550s that were painted black in our sample was 0.435. We are 95% confident that the true proprtion of the 2014 S-Class 550s that were painted black falls between 0.4168 and 0.4528 which our best guss derive from our sample falls in. 
+
 
 
 ### Problem 3 ###
 
-```{r}
+```{r, include=FALSE}
+nbc <- read_csv("nbc_pilotsurvey.csv")
 
 ```
 
+#### Part A ####
+```{r, include=FALSE}
+nbc_pta <- nbc %>%
+  filter(Show == "Living with Ed" | Show == "My Name is Earl")
+
+mean(Q1_Happy ~ Show, data=nbc_pta)
+
+diffmean(Q1_Happy ~ Show, data=nbc_pta)
+
+boot_happy = do(10000)*diffmean(Q1_Happy ~ Show, data=mosaic::resample(nbc_pta))
+
+ggplot(boot_happy) + 
+  geom_histogram(aes(x=diffmean))
+
+confint(boot_happy, level = 0.95)
+```
+
+The question we are deciding to answer is whether or not the population of those who have watched the pilot of the television shows "Living with Ed" and "My Name is Earl" find either show evoking more happiness within them. We filtered the data set to only have reviews for the pilots of the two shows stated and found the mean difference to be -0.149 in favor of "Living with Ed". To address the statistical uncertainty around our best guess we performed a bootstrap resampling of the sample without replacement 10,000 times. After doing so we are 95% confident that the true difference between happiness scores between the two shows is from -0.385 and 0.104. Statistically speaking because the interval contains the value zero the results do not yield statistical significance and the difference between how the two shows make viewers feel in terms of happiness is negligible. 
+
+#### Part B ####
+
+```{r, include=FALSE}
+nbc_ptb <- nbc %>%
+  filter(Show == "The Biggest Loser" | Show == "The Apprentice: Los Angeles")
+
+mean(Q1_Annoyed ~ Show, data=nbc_ptb)
+
+diffmean(Q1_Annoyed ~ Show, data=nbc_ptb)
+
+boot_annoyed = do(10000)*diffmean(Q1_Annoyed ~ Show, data=mosaic::resample(nbc_ptb))
+
+ggplot(boot_annoyed) + 
+  geom_histogram(aes(x=diffmean))
+
+confint(boot_annoyed, level = 0.95)
+```
+
+The question we are pursuing in Part B is which reality TV show, The Biggest Loser and The Apprentice: Los Angeles, viewers tend to be more annoyed with. We filtered the data set to only have reviews for the pilots of the two shows stated and found the mean difference to be -0.271 with a higher score of annoyance associated with The Apprentice: Los Angeles. To address the statistical uncertainty around our best guess we performed a bootstrap resampling of the sample without replacement 10,000 times. After doing so we are 95% confident that the true difference between annoyed scores between the two shows is from -0.524 and -0.016. Statistically speaking because the interval does not contain the value zero, the results do yield statistical significance and the best guess being nearly a quarter of a point may concern some TV executives in regards to The Apprentice. 
+
+
+#### Part C ####
+
+```{r, include=FALSE}
+nbc_ptc <- nbc %>%
+  filter(Show == "Dancing with the Stars") %>%
+  mutate(confused = ifelse(Q2_Confusing %in% c(4, 5), TRUE, FALSE))
+
+prop(~ confused, data=nbc_ptc)
+boot_confused = do(10000)*prop(~confused, data = mosaic::resample(nbc_ptc))
+
+confint(boot_confused, level = 0.95)
+
+```
+
+In this final question regarding television pilots, we want to tackle the question concerning the proportion of viewers who deem Dancing with the Stars a confusing concept for a show.  We filtered the data set to only have reviews for the pilots of the show and created a new variable that corresponds to whether or not the viewer rated the 4 or 5 on the "confusing question" which we define as being "confused". The sample proportion turned out to be 0.077. To address the statistical uncertainty around our best guess we performed a bootstrap resampling of the sample without replacement 10,000 times. After doing so we are 95% confident that the true proportion of viewers who watched the pilot of Dancing with the Stars who were confused is between 0.04 and 0.07. Because the interval does not contain the value zero, the results do yield statistical significance however 3% to 7& of viewers finding the show confusing does not seem to be a cause for concern. 
 
 ### Problem 4 ###
 
-```{r}
+```{r, include=FALSE}
 ebay <- read_csv("ebay.csv")
+mean(rev_ratio ~ adwords_pause, data = ebay)
+
+diffmean(rev_ratio ~ adwords_pause, data = ebay)
+
+boot_ratio_exp = do(10000)*diffmean(rev_ratio ~ adwords_pause, data=mosaic::resample(ebay))
+
+confint(boot_ratio_exp, level = 0.95)
+
 ```
+
+In this problem, we are trying to address the question of whether or not the revenue ratio is the same for the treatment group (paused ads) and in the control group (stopped ads) in eBay's experiment consisting of 210 DMA locations. The revenue ratio is the unit of measurement because it allows us to fairly compare results across the different locations which vary in population.
+
+The sample mean difference derived from the data set is -0.0522 (Control Group - Treatment Group). This means on average the difference between the revenue ratio of the sample indicates that the curtailment of ads led to a decrease in revenue. 
+
+To address the statistical uncertainty of our best estimate we apply the bootstrap concept to construct a confidence interval. After obtaining 10000 simulated sample means of the same size from sampling with replacement, we are 95% confident that the true difference in average revenue ratio between locations that have keyword search ads by eBay and locations that don't is contained in the interval from -0.0912 to -0.0138. Because the interval does not contain zero, we can conclude that there is statistical significance between the revenue ratio not being the same for areas that receive ads and areas that don't in and seem to be in favor of eBay keeping the ads.
+
 
